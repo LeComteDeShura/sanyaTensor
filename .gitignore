@@ -1,0 +1,4 @@
+*.o
+main.cu
+main
+a.out
