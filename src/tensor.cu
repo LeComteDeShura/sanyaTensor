@@ -11,9 +11,12 @@ public:
         for (int i = 0; i < dim; i++) {
             this->volume *= size[i];
         }
+        if (id = -1) {
+            id = 1 + rand() % 100000;
+        }
     }
 
-    tensor(float* data, int* size, int dim, std::string creation_op, tensor* right, tensor* left){
+    tensor(float* data, int* size, int dim, std::string creation_op, tensor* right, tensor* left, bool autograd){
         this->data = data;
         this->size = size;
         this->dim = dim;
@@ -24,6 +27,14 @@ public:
         this->right = right;
         this->left = left;
         this->creation_op = creation_op;
+        if (id = -1) {
+            id = 1 + rand() % 100000;
+        }
+
+        if (left != NULL && right != NULL) {
+            /* code */
+        }
+
     }
 
     float operator[](int i){
@@ -81,11 +92,14 @@ private:
     float* data = NULL;
     int* size = NULL;
     float* grad = NULL;
+    bool autograd = false;
+    int id = -1;
     int dim;
     int volume;
     std::string creation_op;
     tensor* left = NULL;
     tensor* right = NULL;
+
 
 };
 
