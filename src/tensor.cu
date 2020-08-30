@@ -108,7 +108,7 @@ void tensor::print(){
             std::cout << "]\n";
         }
     }
-    else{
+    if(dim == 1){
         std::cout << "[";
         for (int i = 0; i < volume; i++) {
             std::cout << data[i];
@@ -117,6 +117,40 @@ void tensor::print(){
             }
         }
         std::cout << "]\n";
+    }
+    if (dim == 3) {
+        std::cout << "[";
+        for (int n = 0; n < size[2]; n++) {
+            for (int i = 0; i < size[0]; i++) {
+                if (i == 0 && n == 0) {
+                    std::cout << "[";
+                }
+                else{
+                    std::cout << " [";
+                }
+                for (int j = 0; j < size[1]; j++) {
+                    std::cout << std::fixed;
+                    std::cout.precision(2);
+                    std::cout << data[n * size[0] * size[1] + i * size[1] + j];
+                    if (j != size[1] -1 ) {
+                        std::cout << ", ";
+                    }
+                }
+                if (i != size[0] - 1) {
+                    std::cout << "],\n";
+                }
+            }
+
+            if (n != size[2]-1) {
+                std::cout << "];\n\n";
+                // std::cout << '\n';
+            }
+            else{
+                std::cout << "]";
+            }
+        }
+        std::cout << "]";
+        std::cout  << '\n';
     }
 }
 
@@ -203,6 +237,76 @@ tensor* sub (tensor* f, tensor*  t){
         return tret;
     }
     tensor* tret = new tensor(aret, f->getSize(), t->getDim(), "sub", t, f, false);
+    return tret;
+}
+
+tensor* mul (tensor* f, tensor*  t){
+    if (f->getVolume() != t->getVolume() && f->getSize()[0] != t->getSize()[0]) {
+        // throw "Can not take square root of negative number";
+        throw std::invalid_argument("Dim +.");
+    }
+
+    float* aret = new float[t->getVolume()];
+
+    for (int i = 0; i < f->getVolume(); i++) {
+        aret[i] = (*f)[i] * (*t)[i];
+    }
+    if (f->autograd && t->autograd) {
+        tensor* tret = new tensor(aret, f->getSize(), t->getDim(), "mul", t, f, true);
+        return tret;
+    }
+    tensor* tret = new tensor(aret, f->getSize(), t->getDim(), "mul", t, f, false);
+    return tret;
+}
+
+tensor* sum (tensor* f, int dim){
+    if (dim > f->dim) {
+        std::cout << "error sum" << '\n';
+    }
+
+
+    int *size = new int[f->dim - 1];
+    int s = 0;
+    for (int i = 0; i < f->dim; i++) {
+        size[i - s] = f->size[i];
+        if (i == dim-1) {
+            s++;
+        }
+    }
+    int volume = 1;
+    int volume_area = 1;
+    for (int i = 0; i < f->dim; i++) {
+        volume_area *= f->size[i];
+    }
+    float* ar = new float[volume_area];
+    volume = volume_area / f->size[dim-1];
+
+
+    int step;
+    if (dim == 1) {
+        step = volume;
+    }
+
+    if (dim == 2) {
+        step = 1;
+    }
+    std::cout << dim << " " << volume << " " << step << " " << volume_area<< '\n';
+
+    for (int i = 0; i < volume_area; i+=f->size[dim-1]) {
+        for (int j = 0; j < f->size[dim-1]; j+=1) {
+            ar[i] += (*f)[step * j + i];
+            std::cout << (*f)[step * j + i] << " + ";
+        }
+        std::cout  << '\n';
+    }
+
+
+
+    if (f->autograd) {
+        tensor* tret = new tensor(ar, size, f->getDim() - 1, "sum", f, NULL, true);
+        return tret;
+    }
+    tensor* tret = new tensor(ar, size, f->getDim() - 1, "sum", f, NULL, false);
     return tret;
 }
 
