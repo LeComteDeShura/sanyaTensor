@@ -187,6 +187,24 @@ tensor* neg (tensor* f){
     return tret;
 }
 
+tensor* sub (tensor* f, tensor*  t){
+    if (f->getVolume() != t->getVolume() && f->getSize()[0] != t->getSize()[0]) {
+        // throw "Can not take square root of negative number";
+        throw std::invalid_argument("Dim +.");
+    }
+
+    float* aret = new float[t->getVolume()];
+
+    for (int i = 0; i < f->getVolume(); i++) {
+        aret[i] = (*f)[i] - (*t)[i];
+    }
+    if (f->autograd && t->autograd) {
+        tensor* tret = new tensor(aret, f->getSize(), t->getDim(), "sub", t, f, true);
+        return tret;
+    }
+    tensor* tret = new tensor(aret, f->getSize(), t->getDim(), "sub", t, f, false);
+    return tret;
+}
 
 
 
