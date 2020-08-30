@@ -1,4 +1,5 @@
 *.o
+main.cpp
 main.cu
 main
 a.out
