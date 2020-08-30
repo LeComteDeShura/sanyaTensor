@@ -139,11 +139,15 @@ void tensor::backward(tensor* grad, tensor* grad_origin){
             // add(this->grad, grad, this->grad, volume);
             this->grad = add(this->grad, grad);
         }
-        if (left != NULL && right != NULL && (all_children_grads_accounted_for() || grad_origin == NULL)  ) {
+        if ( (left != NULL || right != NULL) && (all_children_grads_accounted_for() || grad_origin == NULL)  ) {
             if (creation_op == "add") {
                 // std::cout << "2/* message */" << '\n';
                 left->backward(grad, this);
                 right->backward(grad, this);
+            }
+
+            if (creation_op == "neg") {
+                right->backward(neg(this->grad));
             }
         }
     }
@@ -166,6 +170,20 @@ tensor* add (tensor* f, tensor*  t){
         return tret;
     }
     tensor* tret = new tensor(aret, f->getSize(), t->getDim(), "add", t, f, false);
+    return tret;
+}
+
+tensor* neg (tensor* f){
+    float* aret = new float[f->getVolume()];
+
+    for (int i = 0; i < f->getVolume(); i++) {
+        aret[i] = (*f)[i] * -1;
+    }
+    if (f->autograd) {
+        tensor* tret = new tensor(aret, f->getSize(), f->getDim(), "neg", f, NULL, true);
+        return tret;
+    }
+    tensor* tret = new tensor(aret, f->getSize(), f->getDim(), "neg", f, NULL, false);
     return tret;
 }
 

@@ -39,3 +39,5 @@ public:
 };
 
 tensor* add (tensor* f, tensor*  t);
+
+tensor* neg (tensor* f);
