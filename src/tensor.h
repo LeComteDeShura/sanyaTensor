@@ -47,3 +47,5 @@ tensor* sub (tensor* f, tensor*  t);
 tensor* mul (tensor* f, tensor*  t);
 
 tensor* sum (tensor* f, int dim);
+
+tensor* expand (tensor* f, int dim, int copies);

@@ -263,18 +263,19 @@ tensor* sum (tensor* f, int dim){
     if (dim > f->dim) {
         std::cout << "error sum" << '\n';
     }
-
-
-    int *size = new int[f->dim - 1];
-    int s = 0;
-    for (int i = 0; i < f->dim; i++) {
-        size[i - s] = f->size[i];
-        if (i == dim-1) {
-            s++;
-        }
-    }
+    // dim = 2;
     int volume = 1;
     int volume_area = 1;
+
+    int *size = new int[f->dim - 1];
+    int l = 0;
+    for (int i = 0; i < f->dim; i++) {
+        size[i - l] = f->size[i];
+        if (i == dim-1) {
+            l++;
+        }
+    }
+
     for (int i = 0; i < f->dim; i++) {
         volume_area *= f->size[i];
     }
@@ -283,20 +284,27 @@ tensor* sum (tensor* f, int dim){
 
 
     int step;
-    if (dim == 1) {
+    int s;
+    int area;
+    if (dim == 2) {
+        step = 1;
+        s = f->size[1];
+        area = volume_area;
+    }
+
+    else if (dim == 1) {
+        s = 1;
+        area = volume;
         step = volume;
     }
 
-    if (dim == 2) {
-        step = 1;
-    }
-    std::cout << dim << " " << volume << " " << step << " " << volume_area<< '\n';
-
-    for (int i = 0; i < volume_area; i+=f->size[dim-1]) {
-        for (int j = 0; j < f->size[dim-1]; j+=1) {
-            ar[i] += (*f)[step * j + i];
+    int n  = 0;
+    for (int i = 0; i < area; i += s) {
+        for (int j = 0; j < f->size[dim-1]; j ++) {
+            ar[n] += (*f)[step * j + i];
             std::cout << (*f)[step * j + i] << " + ";
         }
+        n++;
         std::cout  << '\n';
     }
 
@@ -310,6 +318,55 @@ tensor* sum (tensor* f, int dim){
     return tret;
 }
 
+tensor* expand (tensor* f, int dim, int copies){
+    float* ar = new float;
+    int *size = new int[f->dim + 1];
+    if(dim == 1){
+        ar = new float[f->volume * copies];
+
+        for (int i = 0; i < copies; i++) {
+            for (int j = 0; j < f->volume; j++) {
+                ar[i * f->volume + j] = f->data[j];
+            }
+        }
+
+        int l = 0;
+        for (int i = 0; i < f->dim + 1; i++) {
+            if (i == 2) {
+                size[i] = copies;
+                l = 1;
+                continue;
+            }
+            size[i] = f->size[i - l];
+        }
+    }
+
+    if(dim == 2){
+        ar = new float[f->volume * copies];
+        for (int i = 0; i < f->volume; i++) {
+            for (int j = 0; j < copies; j++) {
+                ar[i * copies + j] = f->data[i];
+            }
+        }
+
+        int l = 0;
+        for (int i = 0; i < f->dim + 1; i++) {
+            if (i == 1) {
+                size[i] = copies;
+                l = 1;
+                continue;
+            }
+            size[i] = f->size[i - l];
+        }
+    }
+
+    if (f->autograd) {
+        tensor* tret = new tensor(ar, size, f->getDim() + 1, "expand", f, NULL, true);
+        return tret;
+    }
+    tensor* tret = new tensor(ar, size, f->getDim() + 1, "expand", f, NULL, false);
+    return tret;
+}
 
 
 
