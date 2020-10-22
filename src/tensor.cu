@@ -373,7 +373,7 @@ tensor* expand (tensor* f, int dim, int copies){
 }
 
 tensor* mm (tensor* f, tensor*  t){
-    if (f->getVolume() != t->getVolume() && f->getSize()[0] != t->getSize()[0]) {
+    if (f->getSize()[1] != t->getSize()[0]) {
         throw std::invalid_argument("Dim +.");
     }
 
@@ -392,6 +392,24 @@ tensor* mm (tensor* f, tensor*  t){
         return tret;
     }
     tensor* tret = new tensor(aret, size, t->getDim(), "mm", f, t, false);
+    return tret;
+}
+
+tensor* transpose (tensor* f){
+    int *size = new int[f->getDim()];
+    size[0] = f->getSize()[0];
+    size[1] = f->getSize()[1];
+
+    float* aret = new float[size[0] * size[1]];
+
+    transpose(f->data, aret, size[0], size[1]);
+
+
+    if (f->autograd) {
+        tensor* tret = new tensor(aret, size, f->getDim(), "transpose", f, NULL, true);
+        return tret;
+    }
+    tensor* tret = new tensor(aret, size, f->getDim(), "transpose", f, NULL, false);
     return tret;
 }
 
