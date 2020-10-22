@@ -13,7 +13,9 @@ tensor::tensor(float* data, int* size, int dim, bool autograd, int id){
     if (id == -1) {
         this->id = 1 + rand() % 100000;
     }
-    this->id = id;
+    else{
+        this->id = id;
+    }
 }
 
 tensor::tensor(float* data, int* size, int dim, int id){
@@ -21,14 +23,105 @@ tensor::tensor(float* data, int* size, int dim, int id){
     this->size = size;
     this->dim = dim;
     this->volume = 1;
-    this->autograd = autograd;
+    this->autograd = false;
     for (int i = 0; i < dim; i++) {
         this->volume *= size[i];
     }
     if (id == -1) {
         this->id = 1 + rand() % 100000;
     }
-    this->id = id;
+    else{
+        this->id = id;
+    }
+}
+
+tensor::tensor(){}
+
+tensor::tensor(tensor *src){
+    this->volume = src->getVolume();
+    this->data = new float(this->volume);
+    this->data = (float*)memccpy(this->data, src->data, '*', this->volume);
+    if (this->data == NULL) {
+        throw std::invalid_argument("Failed to free array data");
+    }
+
+    this->dim = src->getDim();
+    this->size = new int(this->dim);
+    this->size = (int*)memccpy(this->size, src->size, '*', this->dim);
+    if (this->size == NULL) {
+        throw std::invalid_argument("Failed to free array size");
+    }
+
+    this->id = src->id;
+    this->autograd = src->autograd;
+
+    this->left = src->left;
+    this->right = src->right;
+
+    this->creation_op = src->creation_op;
+    this->grad = src->grad;
+    this->children = src->children;
+}
+
+tensor::tensor(tensor &src){
+    this->volume = src.getVolume();
+    this->data = new float(this->volume);
+    this->data = (float*)memccpy(this->data, src.data, '*', this->volume);
+    if (this->data == NULL) {
+        throw std::invalid_argument("Failed to free array data");
+    }
+
+    this->dim = src.getDim();
+    this->size = new int(this->dim);
+    this->size = (int*)memccpy(this->size, src.size, '*', this->dim);
+    if (this->size == NULL) {
+        throw std::invalid_argument("Failed to free array size");
+    }
+
+    this->id = src.id;
+    this->autograd = src.autograd;
+
+    this->left = src.left;
+    this->right = src.right;
+
+    this->creation_op = src.creation_op;
+    this->grad = src.grad;
+    this->children = src.children;
+}
+
+tensor& tensor::operator= (tensor &src){
+    this->volume = src.getVolume();
+    this->data = new float(this->volume);
+    this->data = (float*)memccpy(this->data, src.data, '*', this->volume);
+    if (this->data == NULL) {
+        throw std::invalid_argument("Failed to free array data");
+    }
+
+    this->dim = src.getDim();
+    this->size = new int(this->dim);
+    this->size = (int*)memccpy(this->size, src.size, '*', this->dim);
+    if (this->size == NULL) {
+        throw std::invalid_argument("Failed to free array size");
+    }
+
+    this->id = src.id;
+    this->autograd = src.autograd;
+
+    this->left = src.left;
+    this->right = src.right;
+
+    this->creation_op = src.creation_op;
+    this->grad = src.grad;
+    this->children = src.children;
+    return *this;
+}
+
+tensor::~tensor(){
+    delete [] data;
+    delete [] size;
+    delete left;
+    delete right;
+    delete grad;
 }
 
 tensor::tensor(float* data, int* size, int dim, std::string creation_op, tensor* right, tensor* left, bool autograd){

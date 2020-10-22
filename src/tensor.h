@@ -11,6 +11,18 @@ public:
 
     tensor(float* data, int* size, int dim, std::string creation_op, tensor* right, tensor* left, bool autograd);
 
+    // tensor(float* data);
+
+    tensor(tensor *src);
+
+    tensor();
+
+    tensor(tensor &t);
+
+    tensor& operator= ( tensor &t);
+
+    ~tensor();
+
     float operator[](int i);
 
     bool all_children_grads_accounted_for();
