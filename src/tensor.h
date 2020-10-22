@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include "linearAlg.h"
 
 
 class tensor{

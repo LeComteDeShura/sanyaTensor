@@ -183,6 +183,10 @@ void tensor::backward(tensor* grad, tensor* grad_origin){
             if (creation_op == "neg") {
                 right->backward(neg(this->grad));
             }
+
+            if (creation_op == "sub") {
+                right->backward(neg(this->grad));
+            }
         }
     }
 }
@@ -367,6 +371,30 @@ tensor* expand (tensor* f, int dim, int copies){
     tensor* tret = new tensor(ar, size, f->getDim() + 1, "expand", f, NULL, false);
     return tret;
 }
+
+tensor* mm (tensor* f, tensor*  t){
+    if (f->getVolume() != t->getVolume() && f->getSize()[0] != t->getSize()[0]) {
+        throw std::invalid_argument("Dim +.");
+    }
+
+    int *size = new int[f->getDim()];
+    size[0] = f->getSize()[0];
+    size[1] = t->getSize()[1];
+    int sizek = t->getSize()[0];
+
+    float* aret = new float[size[0] * size[1]];
+
+    matrixMultiply(f->data, t->data, aret, size[0], sizek, sizek, size[1], size[0], size[1]);
+
+
+    if (f->autograd && t->autograd) {
+        tensor* tret = new tensor(aret, size, t->getDim(), "mm", f, t, true);
+        return tret;
+    }
+    tensor* tret = new tensor(aret, size, t->getDim(), "mm", f, t, false);
+    return tret;
+}
+
 
 
 
