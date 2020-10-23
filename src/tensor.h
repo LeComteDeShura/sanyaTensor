@@ -1,7 +1,7 @@
 #include <iostream>
 #include <map>
 #include "linearAlg.h"
-
+#include <cstring> 
 
 class tensor{
 public:

@@ -1,5 +1,39 @@
 #include "tensor.h"
 
+tensor::tensor(float* data, int* size, int dim, std::string creation_op, tensor* right, tensor* left, bool autograd){
+    this->data = data;
+    this->size = size;
+    this->dim = dim;
+    this->volume = 1;
+    for (int i = 0; i < dim; i++) {
+        this->volume *= size[i];
+    }
+    this->right = right;
+    this->left = left;
+    this->creation_op = creation_op;
+    this->autograd = autograd;
+    if (id == -1) {
+        id = 1 + rand() % 100000;
+    }
+
+    if (left != NULL && right != NULL) {
+        auto temp = left->children.find(this->id);
+        if (temp == left->children.end()) {
+            left->children.insert(std::make_pair(id, 1));
+        }
+        else{
+            left->children[id] += 1;
+        }
+
+        temp = right->children.find(this->id);
+        if (temp == right->children.end()) {
+            right->children.insert(std::make_pair(this->id, 1));
+        }
+        else{
+            right->children[this->id] += 1;
+        }
+    }
+}
 
 tensor::tensor(float* data, int* size, int dim, bool autograd, int id){
     this->data = data;
@@ -64,6 +98,9 @@ tensor::tensor(tensor *src){
 }
 
 tensor::tensor(tensor &src){
+    if (this == &src) {
+        return;
+    }
     this->volume = src.getVolume();
     this->data = new float(this->volume);
     this->data = (float*)memccpy(this->data, src.data, '*', this->volume);
@@ -124,40 +161,6 @@ tensor::~tensor(){
     delete grad;
 }
 
-tensor::tensor(float* data, int* size, int dim, std::string creation_op, tensor* right, tensor* left, bool autograd){
-    this->data = data;
-    this->size = size;
-    this->dim = dim;
-    this->volume = 1;
-    for (int i = 0; i < dim; i++) {
-        this->volume *= size[i];
-    }
-    this->right = right;
-    this->left = left;
-    this->creation_op = creation_op;
-    this->autograd = autograd;
-    if (id == -1) {
-        id = 1 + rand() % 100000;
-    }
-
-    if (left != NULL && right != NULL) {
-        auto temp = left->children.find(this->id);
-        if (temp == left->children.end()) {
-            left->children.insert(std::make_pair(id, 1));
-        }
-        else{
-            left->children[id] += 1;
-        }
-
-        temp = right->children.find(this->id);
-        if (temp == right->children.end()) {
-            right->children.insert(std::make_pair(this->id, 1));
-        }
-        else{
-            right->children[this->id] += 1;
-        }
-    }
-}
 
 float tensor::operator[](int i){
     return data[i];
@@ -269,8 +272,8 @@ void tensor::backward(tensor* grad, tensor* grad_origin){
         if ( (left != NULL || right != NULL) && (all_children_grads_accounted_for() || grad_origin == NULL)  ) {
             if (creation_op == "add") {
                 // std::cout << "2/* message */" << '\n';
-                left->backward(grad, this);
-                right->backward(grad, this);
+                left->backward(this->grad, this);
+                right->backward(this->grad, this);
             }
 
             if (creation_op == "neg") {
@@ -278,7 +281,44 @@ void tensor::backward(tensor* grad, tensor* grad_origin){
             }
 
             if (creation_op == "sub") {
-                right->backward(neg(this->grad));
+                // int v = this->grad->getVolume();
+                // float* nw1 = new float[v];
+                // nw1 = (float*)std::memcpy((void*)nw1, (void*)this->grad->data, v);
+                //
+                // int d = this->grad->getDim();
+                //
+                // int* s1 = new int[d];
+                // s1 = (int*)std::memcpy((void*)s1, (void*)this->grad->getSize(), d);
+
+                // left->backward(new tensor(nw1, s1, v, d), this);
+                left->backward(new tensor(this->grad), this);
+                // ///
+                // float* nw2 = new float[v];
+                // nw2 = (float*)std::memcpy((void*)nw2, (void*)this->grad->data, v);
+                //
+                // int* s2 = new int[d];
+                // s2 = (int*)std::memcpy((void*)s2, (void*)this->grad->getSize(), d);
+
+                // right->backward(neg(new tensor(nw2, s2, v, d)), this);
+                right->backward(neg(new tensor(this->grad)), this);
+            }
+
+            if (creation_op == "mul") {
+                tensor* nw1 = mul(this->grad, this->right);
+                left->backward(nw1, this);
+                tensor* nw2 = mul(this->grad, this->left);
+                right->backward(nw2, this);
+            }
+
+            if (creation_op == "mm") {
+                tensor* nw1 = mm(this->grad, this->right);
+                left->backward(nw1);
+                tensor* nw2 = transpose(mul(transpose(this->grad), this->left));
+                right->backward(nw2);
+            }
+
+            if (creation_op == "transpose") {
+                this->right->backward(transpose(this->grad));
             }
         }
     }
